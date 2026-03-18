@@ -19,7 +19,15 @@ libraryDependencies ++= Seq(
 libraryDependencies += "net.debasishg" %% "redisclient" % "3.42"
 libraryDependencies += evolutions
 
+libraryDependencies +="com.github.jwt-scala" %% "jwt-core" % "10.0.1"
+
+libraryDependencies +="com.github.jwt-scala" %% "jwt-json-common" % "10.0.1"
+
+libraryDependencies += "org.mindrot" % "jbcrypt" % "0.4"
+
 libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+
+
 
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "com.aron.controllers._"

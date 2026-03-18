@@ -10,4 +10,8 @@ GET     /                           controllers.HomeController.index()
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 
 
-POST    /user/create                controllers.UserController.createUser
+# POST    /user/create                controllers.UserController.createUser
+
+POST    /auth/register              controllers.AuthController.register
+
+POST    /auth/login                 controllers.AuthController.login
