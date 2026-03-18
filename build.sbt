@@ -10,6 +10,17 @@ scalaVersion := "2.13.18"
 libraryDependencies += guice
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.2" % Test
 
+libraryDependencies ++= Seq(
+  "org.postgresql" % "postgresql" % "42.7.3",
+  "com.typesafe.play" %% "play-slick" % "5.1.0",
+  "com.typesafe.play" %% "play-slick-evolutions" % "5.1.0"
+)
+
+libraryDependencies += "net.debasishg" %% "redisclient" % "3.42"
+libraryDependencies += evolutions
+
+libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "com.aron.controllers._"
 
