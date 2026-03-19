@@ -18,8 +18,12 @@ extends AbstractController(cc) {
     val password = (request.body \ "password").as[String]
     val role = (request.body \ "role").as[String]
 
-    authService.register(name, email, password, role).map { user =>
-      Ok(Json.obj("userId" -> user.id))
+    authService.register(name, email, password, role).map {
+      case Right(user) =>
+        Ok(Json.obj("userId" -> user.id))
+
+      case Left(error) =>
+        Conflict(Json.obj("error" -> error))
     }
   }
 
