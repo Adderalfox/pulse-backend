@@ -6,5 +6,7 @@ case class User(
                email: String,
                password: String,
                role: String,
-               totalPoints: Int = 0
+               totalPoints: Int = 0,
+               companyId: Option[Long],
+               departmentId: Option[Long]
                )
