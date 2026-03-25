@@ -10,8 +10,13 @@ object RolePermissions {
     "TEAM_LEAD" -> Set("EMPLOYEE")
   )
 
-  def canCreate(currentRole: String, targetRole: String): Boolean =
-    heirarchy.getOrElse(currentRole, Set()).contains(targetRole)
+  def canCreate(currentRole: String, targetRole: String): Boolean = {
+    def getAllDescendants(role: String): Set[String] = {
+      val children = heirarchy.getOrElse(role, Set())
+      children ++ children.flatMap(getAllDescendants)
+    }
+    getAllDescendants(currentRole).contains(targetRole)
+  }
 
   def hasAccess(userRole: String, allowedRoles: Set[String]): Boolean =
     allowedRoles.contains(userRole)
