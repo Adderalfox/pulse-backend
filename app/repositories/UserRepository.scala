@@ -28,7 +28,7 @@ class UserRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implici
 
   private val users = TableQuery[Users]
 
-  def create(name: String, email: String, password: String, role: String, companyId: Option[Long] = None, departmentId: Option[Long] = None): Future[User] = {
+  def create(name: String, email: String, password: String, role: String, companyId: Option[Long], departmentId: Option[Long]): Future[User] = {
     val insertQuery = (users returning users.map(_.id)
       into ((user, newId) => user.copy(id = newId))) +=
       User(0L, name, email, password, role, 0, companyId, departmentId)

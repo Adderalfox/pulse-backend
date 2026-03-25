@@ -6,6 +6,7 @@ version := "1.0-SNAPSHOT"
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.13.18"
+val circeVersion = "0.14.6"
 
 libraryDependencies += guice
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.2" % Test
@@ -24,6 +25,12 @@ libraryDependencies +="com.github.jwt-scala" %% "jwt-core" % "10.0.1"
 libraryDependencies +="com.github.jwt-scala" %% "jwt-json-common" % "10.0.1"
 
 libraryDependencies += "org.mindrot" % "jbcrypt" % "0.4"
+
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core"     % circeVersion,
+  "io.circe" %% "circe-generic"  % circeVersion,
+  "io.circe" %% "circe-parser"   % circeVersion
+)
 
 libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 

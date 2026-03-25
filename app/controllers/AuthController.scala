@@ -4,27 +4,42 @@ import javax.inject._
 import play.api.mvc._
 import play.api.libs.json._
 import services.AuthService
+import actions.{AuthAction, AuthHelper}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AuthController @Inject()(cc: ControllerComponents, authService: AuthService)
-                              (implicit ec: ExecutionContext)
-extends AbstractController(cc) {
+class AuthController @Inject()(cc: ControllerComponents, authService: AuthService, authAction: AuthAction)(implicit ec: ExecutionContext)
+  extends AbstractController(cc) {
 
-  def register = Action.async(parse.json) {  request =>
-    val name = (request.body \ "name").as[String]
-    val email = (request.body \ "email").as[String]
-    val password = (request.body \ "password").as[String]
-    val role = (request.body \ "role").as[String]
+  def createUser = authAction.async(parse.json) { request =>
 
-    authService.register(name, email, password, role).map {
-      case Right(user) =>
-        Ok(Json.obj("userId" -> user.id))
+    AuthHelper.authorize[JsValue](
+      Set("SUPER_ADMIN", "ADMIN", "HR", "DEPARTMENT_MANAGER", "TEAM_LEAD")
+    ) { req =>
 
-      case Left(error) =>
-        Conflict(Json.obj("error" -> error))
-    }
+      val name = (req.body \ "name").as[String]
+      val email = (req.body \ "email").as[String]
+      val password = (req.body \ "password").as[String]
+      val role = (req.body \ "role").as[String]
+      val departmentId = (req.body \ "departmentId").asOpt[Long]
+
+      authService.register(
+        requester = req.user,
+        name = name,
+        email = email,
+        password = password,
+        role = role,
+        companyId = req.user.companyId,
+        departmentId = departmentId
+      ).map {
+        case Right(user) =>
+          Ok(Json.obj("userId" -> user.id))
+
+        case Left(error) =>
+          Forbidden(Json.obj("error" -> error))
+      }
+    }(ec)(request)
   }
 
   def login = Action.async(parse.json) { request =>
