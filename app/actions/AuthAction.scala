@@ -3,7 +3,7 @@ package actions
 import javax.inject._
 import play.api.mvc._
 import utils.JwtUtil
-import models.JwtPayload
+import models.{ JwtPayload, Role }
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,7 +44,7 @@ class AuthAction @Inject()(val parser: BodyParsers.Default)(implicit val executi
 }
 
 object AuthHelper {
-  def authorize[A](allowedRoles: Set[String])
+  def authorize[A](allowedRoles: Set[Role])
                   (block: AuthRequest[A] => Future[Result])
                   (implicit ec: ExecutionContext): AuthRequest[A] => Future[Result] = { req =>
 

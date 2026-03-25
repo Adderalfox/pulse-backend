@@ -5,6 +5,7 @@ import play.api.mvc._
 import play.api.libs.json._
 import services.AuthService
 import actions.{AuthAction, AuthHelper}
+import models.Role
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -21,23 +22,32 @@ class AuthController @Inject()(cc: ControllerComponents, authService: AuthServic
       val name = (req.body \ "name").as[String]
       val email = (req.body \ "email").as[String]
       val password = (req.body \ "password").as[String]
-      val role = (req.body \ "role").as[String]
+      val roleStr = (req.body \ "role").as[String]
       val departmentId = (req.body \ "departmentId").asOpt[Long]
 
-      authService.register(
-        requester = req.user,
-        name = name,
-        email = email,
-        password = password,
-        role = role,
-        companyId = req.user.companyId,
-        departmentId = departmentId
-      ).map {
-        case Right(user) =>
-          Ok(Json.obj("userId" -> user.id))
+      try {
+        val role = Role.fromString(roleStr)
 
-        case Left(error) =>
-          Forbidden(Json.obj("error" -> error))
+        authService.register(
+          requester = req.user,
+          name = name,
+          email = email,
+          password = password,
+          role = role,
+          companyId = req.user.companyId,
+          departmentId = departmentId
+        ).map {
+          case Right(user) =>
+            Ok(Json.obj("userId" -> user.id))
+
+          case Left(error) =>
+            Forbidden(Json.obj("error" -> error))
+        }
+      } catch {
+        case _: IllegalArgumentException =>
+          Future.successful(
+            BadRequest(Json.obj("error" -> "Invalid role"))
+          )
       }
     }(ec)(request)
   }
