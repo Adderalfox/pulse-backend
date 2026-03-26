@@ -16,7 +16,7 @@ class AuthController @Inject()(cc: ControllerComponents, authService: AuthServic
   def createUser = authAction.async(parse.json) { request =>
 
     AuthHelper.authorize[JsValue](
-      Set("SUPER_ADMIN", "ADMIN", "HR", "DEPARTMENT_MANAGER", "TEAM_LEAD")
+      Set("SUPER_ADMIN", "ADMIN", "HR", "DEPARTMENT_MANAGER", "TEAM_LEAD").map(Role.fromString)
     ) { req =>
 
       val name = (req.body \ "name").as[String]
