@@ -61,4 +61,29 @@ class AuthController @Inject()(cc: ControllerComponents, authService: AuthServic
       case None => Unauthorized(Json.obj("error" -> "Invalid credentials"))
     }
   }
+
+  // For creation of Super Admin
+  def bootstrapSuperAdmin = Action.async(parse.json) { request =>
+    val name = (request.body \ "name").as[String]
+    val email = (request.body \ "email").as[String]
+    val password = (request.body \ "password").as[String]
+
+    authService.userCount().flatMap { count =>
+      if (count > 0) {
+        Future.successful(
+          Forbidden(Json.obj("error" -> "Super admin already exists"))
+        )
+      } else {
+        authService.bootstrapSuperAdmin(name, email, password).map {
+          case Right(user) =>
+            Ok(Json.obj(
+              "message" -> "Super Admin created",
+              "userId" -> user.id
+            ))
+          case Left(error) =>
+            BadRequest(Json.obj("error" -> error))
+        }
+      }
+    }
+  }
 }

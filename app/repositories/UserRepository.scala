@@ -52,4 +52,9 @@ class UserRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implici
   def findByEmail(email: String): Future[Option[User]] = {
     dbConfig.db.run(users.filter(_.email === email).result.headOption)
   }
+
+  // For creation of Super Admin
+  def count(): Future[Int] = {
+    dbConfig.db.run(users.length.result)
+  }
 }
