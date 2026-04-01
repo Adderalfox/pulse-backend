@@ -18,9 +18,7 @@ class AuthAction @Inject()(val parser: BodyParsers.Default)(implicit val executi
   override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
     request.headers.get("Authorization") match {
       case Some(tokenHeader) =>
-        //        try {
         val token = tokenHeader.replace("Bearer ", "")
-        //          val payload = JwtUtil.decodeToken(token)
 
         JwtUtil.decodeToken(token) match {
           case Some(payload) =>
@@ -29,13 +27,6 @@ class AuthAction @Inject()(val parser: BodyParsers.Default)(implicit val executi
           case None =>
             Future.successful(Results.Unauthorized("Invalid token"))
         }
-
-      //          val authRequest = new AuthRequest(payload, request)
-      //          block(authRequest)
-      //        } catch {
-      //          case _: Exception =>
-      //            Future.successful(Results.Unauthorized("Invalid or expired token"))
-      //        }
 
       case None =>
         Future.successful(Results.Unauthorized("Missing Authorization header"))

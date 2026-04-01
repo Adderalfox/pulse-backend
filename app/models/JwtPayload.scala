@@ -3,7 +3,7 @@ package models
 import models.Role
 
 case class JwtPayload(
-                       userId: Long,
+                       userId: String,
                        email: String,
                        role: Role,
                        companyId: Option[Long],

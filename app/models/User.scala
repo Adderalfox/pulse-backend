@@ -3,7 +3,7 @@ package models
 import models.Role
 
 case class User(
-               id: Long,
+               id: String,
                name: String,
                email: String,
                password: String,
