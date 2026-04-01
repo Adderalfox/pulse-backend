@@ -8,6 +8,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import models.Department
 
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Singleton
 class DepartmentRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) {
@@ -17,7 +18,7 @@ class DepartmentRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
   import dbConfig.profile.api._
 
   private class DepartmentTable(tag: Tag) extends Table[Department](tag, "departments") {
-    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def id = column[String]("id", O.PrimaryKey)
     def name = column[String]("name")
     def companyId = column[Option[Long]]("company_id")
     def createdAt = column[Option[java.time.LocalDateTime]]("created_at")
@@ -29,12 +30,11 @@ class DepartmentRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(i
 
   def create(name: String, companyId: Option[Long]): Future[Department] = {
     val now = Some(LocalDateTime.now())
+    val newId = UUID.randomUUID().toString
 
-    val insertQuery = (departments returning departments.map(_.id)
-      into ((department, newId) => department.copy(id = newId))) +=
-      Department(0L, name, companyId, now)
+    val newDepartment = Department(newId, name, companyId, now)
 
-    dbConfig.db.run(insertQuery)
+    dbConfig.db.run(departments += newDepartment).map(_ => newDepartment)
   }
 
   def findByNameAndCompany(name: String, companyId: Option[Long]): Future[Option[Department]] = {
