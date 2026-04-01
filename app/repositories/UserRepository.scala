@@ -35,16 +35,16 @@ class UserRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implici
 
     def totalPoints = column[Int]("total_points")
 
-    def companyId = column[Option[Long]]("company_id")
+    def companyId = column[Option[String]]("company_id")
 
-    def departmentId = column[Option[Long]]("department_id")
+    def departmentId = column[Option[String]]("department_id")
 
     def * = (id, name, email, password, role, totalPoints, companyId, departmentId) <> ((User.apply _).tupled, User.unapply)
   }
 
   private val users = TableQuery[Users]
 
-  def create(name: String, email: String, password: String, role: Role, companyId: Option[Long], departmentId: Option[Long]): Future[User] = {
+  def create(name: String, email: String, password: String, role: Role, companyId: Option[String], departmentId: Option[String]): Future[User] = {
     val newId = UUID.randomUUID().toString
 
     val newUser = User(newId, name, email, password, role, 0, companyId, departmentId)

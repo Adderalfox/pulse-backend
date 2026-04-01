@@ -21,7 +21,7 @@ class DepartmentController @Inject()(cc: ControllerComponents, departmentService
       Set("SUPER_ADMIN", "ADMIN").map(Role.fromString)
     ) { req =>
       val name = (req.body \ "name").as[String]
-      val companyId = (req.body \ "companyId").asOpt[Long]
+      val companyId = (req.body \ "companyId").asOpt[String]
 
       try {
         departmentService.createDepartment(

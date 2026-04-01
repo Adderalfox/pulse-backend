@@ -1,16 +1,16 @@
 # --- !Ups
 
 CREATE TABLE companies (
-    id SERIAL PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     domain VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE departments (
-    id SERIAL PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    company_id INT NOT NULL,
+    company_id VARCHAR(36) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_department_company
         FOREIGN KEY(company_id)
@@ -20,13 +20,13 @@ CREATE TABLE departments (
 );
 
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password TEXT NOT NULL,
     role TEXT NOT NULL,
-    company_id INT,
-    department_id INT,
+    company_id VARCHAR(36),
+    department_id VARCHAR(36),
     total_points INT DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_company

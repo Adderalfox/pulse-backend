@@ -6,6 +6,6 @@ case class JwtPayload(
                        userId: String,
                        email: String,
                        role: Role,
-                       companyId: Option[Long],
-                       departmentId: Option[Long]
+                       companyId: Option[String],
+                       departmentId: Option[String]
                      )
