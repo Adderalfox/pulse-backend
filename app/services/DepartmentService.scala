@@ -9,7 +9,7 @@ import security.RolePermissions
 
 @Singleton
 class DepartmentService @Inject()(departmentRepo: DepartmentRepository)(implicit ec: ExecutionContext) {
-  def createDepartment(requester: JwtPayload, name: String, companyId: Option[Long]): Future[Either[String, Department]] = {
+  def createDepartment(requester: JwtPayload, name: String, companyId: Option[String]): Future[Either[String, Department]] = {
 
     if (!RolePermissions.hasAccess(requester.role, Set(Role.SUPER_ADMIN, Role.ADMIN))) {
       return Future.successful(Left("Access Denied!"))

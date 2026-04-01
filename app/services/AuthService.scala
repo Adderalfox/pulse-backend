@@ -11,7 +11,7 @@ import security.RolePermissions
 @Singleton
 class AuthService @Inject()(userRepo: UserRepository)(implicit ec: ExecutionContext) {
 
-  def register(requester: JwtPayload, name: String, email: String, password: String, role: Role, companyId: Option[Long], departmentId: Option[Long]): Future[Either[String, User]] = {
+  def register(requester: JwtPayload, name: String, email: String, password: String, role: Role, companyId: Option[String], departmentId: Option[String]): Future[Either[String, User]] = {
     if (!RolePermissions.canCreate(requester.role, role)) {
       return Future.successful(Left("You are not allowed to create this role"))
     }

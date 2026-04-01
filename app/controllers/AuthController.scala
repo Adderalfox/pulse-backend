@@ -23,7 +23,7 @@ class AuthController @Inject()(cc: ControllerComponents, authService: AuthServic
       val email = (req.body \ "email").as[String]
       val password = (req.body \ "password").as[String]
       val roleStr = (req.body \ "role").as[String]
-      val departmentId = (req.body \ "departmentId").asOpt[Long]
+      val departmentId = (req.body \ "departmentId").asOpt[String]
 
       try {
         val role = Role.fromString(roleStr)

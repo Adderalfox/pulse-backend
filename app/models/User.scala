@@ -9,6 +9,6 @@ case class User(
                password: String,
                role: Role,
                totalPoints: Int = 0,
-               companyId: Option[Long],
-               departmentId: Option[Long]
+               companyId: Option[String],
+               departmentId: Option[String]
                )
