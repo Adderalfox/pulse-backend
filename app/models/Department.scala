@@ -5,6 +5,6 @@ import java.time.LocalDateTime
 case class Department(
                      id: Long = 0,
                      name: String,
-                     companyId: Long,
+                     companyId: Option[Long],
                      createdAt: Option[LocalDateTime] = None
                      )

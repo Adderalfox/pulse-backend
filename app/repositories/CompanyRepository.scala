@@ -36,6 +36,6 @@ class CompanyRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(impl
     dbConfig.db.run(insertQuery)
   }
 
-  def findById(id: Long): Future[Option[Company]] =
-    dbConfig.db.run(companies.filter(_.id === id).result.headOption)
+  def findByDomain(domain: String): Future[Option[Company]] =
+    dbConfig.db.run(companies.filter(_.domain === domain).result.headOption)
 }

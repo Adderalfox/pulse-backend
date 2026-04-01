@@ -12,6 +12,11 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 
 # POST    /user/create                controllers.UserController.createUser
 
+
 POST    /auth/create                controllers.AuthController.createUser
 
 POST    /auth/login                 controllers.AuthController.login
+
+POST    /company/create             controllers.CompanyController.createCompany
+
+POST    /department/create          controllers.DepartmentController.createDepartment
