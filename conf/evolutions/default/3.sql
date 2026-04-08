@@ -25,7 +25,8 @@ CREATE TABLE user_skill_scores
 (
     id                VARCHAR(36) PRIMARY KEY,
     user_id           VARCHAR(36)  NOT NULL,
-    company_id        VARCHAR(100) NOT NULL,
+    company_id        VARCHAR(36)  NOT NULL,
+    skill_name        VARCHAR(100) NOT NULL,
     score             FLOAT                    DEFAULT 0.0,
     endorsement_count INT                      DEFAULT 0,
     certified         BOOLEAN                  DEFAULT false,

@@ -23,15 +23,16 @@ CREATE TABLE appreciations
     CONSTRAINT fk_appreciation_company
         FOREIGN KEY (company_id) REFERENCES companies (id) ON DELETE CASCADE,
     CONSTRAINT fk_appreciation_department
-        FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE CASCADE SET NULL
+        FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE CASCADE SET NOT NULL
 );
 
 CREATE TABLE appreciation_skill_tags
 (
     id               VARCHAR(36) PRIMARY KEY,
-    appreciation_id  VARCHAR(36) NOT NULL,
+    appreciation_id  VARCHAR(36)  NOT NULL,
+    skill_name       VARCHAR(100) NOT NULL,
     confidence_score FLOAT                    DEFAULT 1.0,
-    source           VARCHAR(20) NOT NULL     DEFAULT 'manual'
+    source           VARCHAR(20)  NOT NULL    DEFAULT 'manual'
         CHECK (source IN ('manual', 'ai_extracted')),
     created_at       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_tag_appreciation
