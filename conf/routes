@@ -20,3 +20,5 @@ POST    /auth/login                 controllers.AuthController.login
 POST    /company/create             controllers.CompanyController.createCompany
 
 POST    /department/create          controllers.DepartmentController.createDepartment
+
+POST    /appreciations/create       controllers.AppreciationController.createAppreciation
