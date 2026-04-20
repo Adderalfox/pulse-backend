@@ -52,22 +52,4 @@ class AuthService @Inject()(userRepo: UserRepository)(implicit ec: ExecutionCont
       case _ => None
     }
   }
-
-  // For creation of Super Admin
-  def userCount(): Future[Int] = {
-    userRepo.count()
-  }
-
-  def bootstrapSuperAdmin(name: String, email: String, password: String): Future[Either[String, User]] = {
-    val hashed = PasswordUtil.hash(password)
-
-    userRepo.create(
-      name = name,
-      email = email,
-      password = hashed,
-      role = Role.SUPER_ADMIN,
-      companyId = None,
-      departmentId = None
-    ).map(user => Right(user))
-  }
 }
