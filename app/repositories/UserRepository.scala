@@ -2,18 +2,17 @@ package repositories
 
 import javax.inject._
 import play.api.db.slick.DatabaseConfigProvider
-import slick.jdbc.JdbcProfile
+import slick.jdbc.PostgresProfile
 
 import scala.concurrent.{ExecutionContext, Future}
-import models.User
-import models.Role
+import models.{Role, User}
 
 import java.util.UUID
 
 @Singleton
 class UserRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) {
 
-  val dbConfig = dbConfigProvider.get[JdbcProfile]
+  val dbConfig = dbConfigProvider.get[PostgresProfile]
 
   import dbConfig.profile.api._
 
@@ -59,5 +58,13 @@ class UserRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implici
   // For creation of Super Admin
   def count(): Future[Int] = {
     dbConfig.db.run(users.length.result)
+  }
+
+  def findById(userId: String): Future[Option[User]] = {
+    dbConfig.db.run(users.filter(_.id === userId).result.headOption)
+  }
+
+  def findByCompanyId(companyId: String): Future[Seq[User]] = {
+    dbConfig.db.run(users.filter(_.companyId === companyId).result)
   }
 }

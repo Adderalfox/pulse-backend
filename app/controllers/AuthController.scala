@@ -24,6 +24,7 @@ class AuthController @Inject()(cc: ControllerComponents, authService: AuthServic
       val password = (req.body \ "password").as[String]
       val roleStr = (req.body \ "role").as[String]
       val departmentId = (req.body \ "departmentId").asOpt[String]
+      val companyId = (req.body \ "companyId").asOpt[String]
 
       try {
         val role = Role.fromString(roleStr)
@@ -34,7 +35,7 @@ class AuthController @Inject()(cc: ControllerComponents, authService: AuthServic
           email = email,
           password = password,
           role = role,
-          companyId = req.user.companyId,
+          companyId = companyId, // ToDo:-Fix it for taking from req.companyId
           departmentId = departmentId
         ).map {
           case Right(user) =>

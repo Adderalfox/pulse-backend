@@ -6,5 +6,5 @@ case class Company(
                   id: String,
                   name: String,
                   domain: String,
-                  createdAt: Option[LocalDateTime] = None
+                  createdAt: LocalDateTime
                   )

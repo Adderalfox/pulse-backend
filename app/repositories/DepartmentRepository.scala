@@ -2,7 +2,7 @@ package repositories
 
 import javax.inject._
 import play.api.db.slick.DatabaseConfigProvider
-import slick.jdbc.JdbcProfile
+import slick.jdbc.PostgresProfile
 
 import scala.concurrent.{ExecutionContext, Future}
 import models.Department
@@ -13,7 +13,7 @@ import java.util.UUID
 @Singleton
 class DepartmentRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) {
 
-  private val dbConfig = dbConfigProvider.get[JdbcProfile]
+  private val dbConfig = dbConfigProvider.get[PostgresProfile]
 
   import dbConfig.profile.api._
 

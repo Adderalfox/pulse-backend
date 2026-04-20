@@ -23,3 +23,9 @@ POST    /department/create          controllers.DepartmentController.createDepar
 
 # For creation of super admin
 POST    /auth/bootstrap             controllers.AuthController.bootstrapSuperAdmin
+
+POST    /appreciations/create       controllers.AppreciationController.createAppreciation
+
+GET     /appreciations/feed         controllers.AppreciationController.feed(limit: Int, offset: Int)
+
+GET     /appreciations/suggestions  controllers.AppreciationController.suggestions
