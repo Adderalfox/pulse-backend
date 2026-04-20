@@ -32,6 +32,12 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-parser"   % circeVersion
 )
 
+libraryDependencies ++= Seq(
+  ws,                                         // Play WSClient - for Gemini HTTP calls
+  "io.qdrant" % "client" % "1.9.1",           // Qdrant Java gPRC client
+  "com.bucket4j" % "bucket4j-core" % "8.10.1" // Rate limiting for Gemini calls
+)
+
 libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 
 
