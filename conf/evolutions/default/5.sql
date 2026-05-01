@@ -1,3 +1,5 @@
+# --- !Ups
+
 CREATE TABLE user_skills (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
