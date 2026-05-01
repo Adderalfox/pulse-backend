@@ -3,14 +3,14 @@ package controllers
 import javax.inject._
 import play.api.mvc._
 import play.api.libs.json._
-import services.{AppreciationService, FeedService, SuggestionService}
+import services.{AppreciationService, FeedService, IntelligencePipeline, SuggestionService}
 import actions.{AuthAction, AuthHelper}
 import models.Role
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AppreciationController @Inject()(cc: ControllerComponents, appreciationService: AppreciationService, feedService: FeedService, suggestionService: SuggestionService, authAction: AuthAction)(implicit ec: ExecutionContext)
+class AppreciationController @Inject()(cc: ControllerComponents, appreciationService: AppreciationService, feedService: FeedService, suggestionService: SuggestionService, intelligencePipeline: IntelligencePipeline, authAction: AuthAction)(implicit ec: ExecutionContext)
   extends AbstractController(cc) {
 
   def createAppreciation = authAction.async(parse.json) { request =>
@@ -33,7 +33,18 @@ class AppreciationController @Inject()(cc: ControllerComponents, appreciationSer
         appreciationType,
         visibility
       ).map {
-        case Right(res) => Ok(Json.obj(
+        case Right(res) =>
+          intelligencePipeline.process(
+            appreciationId = res.appreciation.id,
+            message = res.appreciation.text,
+            recipientId = res.appreciation.receiverId,
+            senderId = res.appreciation.giverId,
+            departmentId = "",
+            senderRole = req.user.role.name,
+            recipientRole = "EMPLOYEE",
+            department = "Engineering"
+          )
+          Ok(Json.obj(
           "data" -> Json.obj(
             "id" -> res.appreciation.id,
             "giverId" -> res.appreciation.giverId,

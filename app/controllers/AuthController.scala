@@ -6,12 +6,13 @@ import play.api.libs.json._
 import services.AuthService
 import actions.{AuthAction, AuthHelper}
 import models.Role
+import play.api.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AuthController @Inject()(cc: ControllerComponents, authService: AuthService, authAction: AuthAction)(implicit ec: ExecutionContext)
-  extends AbstractController(cc) {
+  extends AbstractController(cc) with Logging {
 
   def createUser = authAction.async(parse.json) { request =>
 
@@ -39,6 +40,7 @@ class AuthController @Inject()(cc: ControllerComponents, authService: AuthServic
           departmentId = departmentId
         ).map {
           case Right(user) =>
+            logger.info("User is created!")
             Ok(Json.obj("userId" -> user.id))
 
           case Left(error) =>

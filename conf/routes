@@ -22,10 +22,26 @@ POST    /company/create             controllers.CompanyController.createCompany
 POST    /department/create          controllers.DepartmentController.createDepartment
 
 # For creation of super admin
-POST    /auth/bootstrap             controllers.AuthController.bootstrapSuperAdmin
+# POST    /auth/bootstrap             controllers.AuthController.bootstrapSuperAdmin
 
 POST    /appreciations/create       controllers.AppreciationController.createAppreciation
 
 GET     /appreciations/feed         controllers.AppreciationController.feed(limit: Int, offset: Int)
 
 GET     /appreciations/suggestions  controllers.AppreciationController.suggestions
+
+GET     /skills/user/:userId        controllers.SkillController.getUserSkills(userId: String)
+
+GET     /skills/top                 controllers.SkillController.getTopUsersForSkill
+
+GET     /skills/search              controllers.SkillController.searchSkills
+
+GET     /insights/experts           controllers.InsightController.getTopExperts
+
+POST    /query/experts              controllers.InsightController.queryExperts
+
+POST    /nominations/generate       controllers.NominationController.generateDraft
+
+GET     /nominations/nominee/:nomineeId controllers.NominationController.getDraftsForNominee(nomineeId: String)
+
+GET     /nominations/my-drafts      controllers.NominationController.getMyDrafts
