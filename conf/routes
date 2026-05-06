@@ -36,6 +36,8 @@ GET     /skills/top                 controllers.SkillController.getTopUsersForSk
 
 GET     /skills/search              controllers.SkillController.searchSkills
 
+GET     /users/list                 controllers.UserController.listUsers
+
 GET     /insights/experts           controllers.InsightController.getTopExperts
 
 POST    /query/experts              controllers.InsightController.queryExperts

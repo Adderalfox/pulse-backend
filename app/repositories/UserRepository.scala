@@ -67,4 +67,13 @@ class UserRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implici
   def findByCompanyId(companyId: String): Future[Seq[User]] = {
     dbConfig.db.run(users.filter(_.companyId === companyId).result)
   }
+
+  def listUsers(companyId: Option[String]): Future[Seq[User]] = {
+    val query = companyId match {
+      case Some(cid) => users.filter(_.companyId === cid)
+      case None => users
+    }
+
+    dbConfig.db.run(query.result)
+  }
 }

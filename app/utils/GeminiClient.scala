@@ -1,7 +1,6 @@
 package utils
 
 import io.github.bucket4j.{Bandwidth, Bucket}
-import org.checkerframework.checker.units.qual.Temperature
 import play.api.libs.json._
 import play.api.libs.ws.{WSClient, WSResponse}
 
