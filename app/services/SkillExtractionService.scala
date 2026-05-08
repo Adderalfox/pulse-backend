@@ -38,6 +38,7 @@ class SkillExtractionService @Inject()(geminiClient: GeminiClient, config: AppCo
 
     geminiClient.generateContent(systemPrompt, userPrompt).map {
       case Right(rawJson) =>
+        logger.info(s"Successfully reached Gemini model for skill extraction")
         parseGeminiResponse(rawJson) match {
           case Right(skills) =>
             ExtractionResult(skills, config.gemini.extractionModel, ExtractionSource.LLM)

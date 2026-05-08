@@ -17,6 +17,12 @@ class QdrantStartup @Inject()(qdrantClient: QdrantClientWrapper, lifecycle: Appl
     logger.error(s"[QdrantStartup] Failed to ensure collection: ${e.getMessage}")
   }
 
+  qdrantClient.ensureAwardDefinitionsCollectionExists().map { _ =>
+    logger.info("[QdrantStartup] pulse_award_definitions collection ready.")
+  }.recover { case e =>
+    logger.error(s"[QdrantStartup] Failed to ensure pulse_award_definitions: ${e.getMessage}")
+  }
+
   lifecycle.addStopHook{ () =>
     Future.successful(qdrantClient.close())
   }

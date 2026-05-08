@@ -23,6 +23,7 @@ class EmbeddingService @Inject()(geminiClient: GeminiClient, qdrantClient: Qdran
             logger.error(s"Embedding failed for appreciation $appreciationId: $err")
             Future.successful(())
           case Right(vector) =>
+            logger.info(s"Successfully reached Gemini model for embedding appreciation $appreciationId")
             val pointId = UUID.randomUUID().toString
             val payload = Map(
               "appreciation_id" -> appreciationId,

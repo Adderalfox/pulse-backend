@@ -9,6 +9,7 @@ import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.Random
+import play.api.Logging
 
 sealed trait EmbeddingTaskType {
   def value: String
@@ -35,7 +36,7 @@ case class GeminiParseError(message: String) extends GeminiError
 case class GeminiServerError(message: String) extends GeminiError
 
 @Singleton
-class GeminiClient @Inject()(ws: WSClient, config: AppConfig)(implicit ec: ExecutionContext) {
+class GeminiClient @Inject()(ws: WSClient, config: AppConfig)(implicit ec: ExecutionContext) extends Logging {
   private val bucket: Bucket = Bucket.builder().addLimit(Bandwidth.builder()
       .capacity(config.gemini.requestPerMinute)
       .refillGreedy(config.gemini.requestPerMinute, Duration.ofMinutes(1))
@@ -45,7 +46,8 @@ class GeminiClient @Inject()(ws: WSClient, config: AppConfig)(implicit ec: Execu
 
   def generateContent(systemPrompt: String, userPrompt: String, temperature: Double = 0.1): Future[Either[GeminiError, String]] =
     acquireToken().flatMap { _ =>
-      val url = s"${config.gemini.baseUrl}/models/${config.gemini.extractionModel}:generateContent?key=${config.gemini.apiKey}"
+//      val url = s"${config.gemini.baseUrl}/models/${config.gemini.extractionModel}:generateContent?key=${config.gemini.apiKey}"
+      val url = s"${config.gemini.baseUrlLocal}/generate"
       val body = buildGenerationRequestBody(systemPrompt, userPrompt, temperature)
       retryWithBackoff(config.gemini.maxRetries) {
         ws.url(url)
@@ -97,6 +99,7 @@ class GeminiClient @Inject()(ws: WSClient, config: AppConfig)(implicit ec: Execu
   private def parseGenerationResponse(response: WSResponse): Either[GeminiError, String] =
     response.status match {
       case 200 =>
+        logger.info("Successfully generated content from Gemini model")
         val text = (response.json \ "candidates" \ 0 \ "content" \ "parts" \ 0 \ "text").asOpt[String]
         text match {
           case Some(t) => Right(t)
@@ -110,6 +113,7 @@ class GeminiClient @Inject()(ws: WSClient, config: AppConfig)(implicit ec: Execu
   private def parseEmbeddingResponse(response: WSResponse): Either[GeminiError, Seq[Float]] =
     response.status match {
       case 200 =>
+        logger.info("Successfully reached Gemini model for embedding")
         (response.json \ "embedding" \ "values").asOpt[Seq[Float]] match {
           case Some(v) => Right(v)
           case None => Left(GeminiParseError("No embedding values in response"))

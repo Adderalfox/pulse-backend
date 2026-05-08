@@ -1,0 +1,44 @@
+# Project Overview: Pulse Backend (AI HR Intelligence)
+
+Your project is an AI-powered HR intelligence system built with Scala (Play Framework), using PostgreSQL (via Slick) for structured data and Qdrant for vector-based search.
+
+## Core Flow (Your Main Goal)
+1. **Data Capture**: Employees appreciate each other (stored in Postgres + embedded in Qdrant).
+2. **Intelligence**: The `AwardRecommendationService` uses an Agentic Loop (via Gemini) to analyze those appreciations, build a profile summary, and match them against `AwardDefinitions` stored in Qdrant.
+3. **Delivery**: The `NominationService` then takes those matches and generates a high-quality "Nomination Draft" that explains why the employee deserves the award based on specific evidence.
+
+---
+
+## Redundant or Peripheral Files
+Based on your goal of AI-driven Award Recommendations and Nomination Drafts, the following files appear to be redundant residue from previous experiments:
+
+### 1. Graph & Relationship Residue
+These focus on social graph metrics rather than semantic text analysis.
+* `app/repositories/InteractionEdgeRepository.scala`
+* `app/models/insights/InsightModels.scala`
+* `app/controllers/InsightController.scala`
+
+### 2. Manual/Rule-Based Skill Logic
+Gemini extracts skills naturally; these manual dictionaries and legacy scoring services are likely obsolete.
+* `app/utils/SkillDictionary.scala`
+* `app/repositories/AppreciationSkillTagRepository.scala`
+* `app/services/SkillExtractionService.scala`
+* `app/services/SkillScoringService.scala`
+
+### 3. Experimental AI Residue
+Generic pipelines that overlap with your specialized award services.
+* `app/services/RagService.scala`
+* `app/services/IntelligencePipeline.scala`
+
+### 4. Unused Infrastructure & Boilerplate
+* `app/utils/RedisClient.scala`
+* `app/controllers/HomeController.scala`
+* `app/views/` (HTML templates for a REST backend)
+
+---
+
+## Core Files (Keep these clean)
+* **Services**: `AwardRecommendationService`, `NominationService`, `AwardDefinitionService`.
+* **AI/Vector Logic**: `GeminiClient`, `QdrantClientWrapper`.
+* **Data**: `AppreciationRepository`, `AwardDefinitionRepository`.
+* **Controllers**: `AwardController`, `NominationController`.

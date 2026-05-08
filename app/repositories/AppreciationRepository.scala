@@ -138,4 +138,12 @@ class AppreciationRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)
       }
     }
   }
+
+  def countForUser(userId: String): Future[Int] =
+    dbConfig.db.run(
+      appreciations
+        .filter(_.receiverId === userId)
+        .length
+        .result
+    )
 }

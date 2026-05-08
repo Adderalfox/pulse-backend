@@ -47,3 +47,17 @@ POST    /nominations/generate       controllers.NominationController.generateDra
 GET     /nominations/nominee/:nomineeId controllers.NominationController.getDraftsForNominee(nomineeId: String)
 
 GET     /nominations/my-drafts      controllers.NominationController.getMyDrafts
+
+# Award Definitions
+POST    /awards/definitions         controllers.AwardController.createAwardDefinition
+GET     /awards/definitions         controllers.AwardController.listAwardDefinitions
+GET     /awards/definitions/:id     controllers.AwardController.getAwardDefinition(id: String)
+PUT     /awards/definitions/:id     controllers.AwardController.updateAwardDefinition(id: String)
+DELETE  /awards/definitions/:id     controllers.AwardController.deleteAwardDefinition(id: String)
+
+# Award Recommendations
+POST    /awards/recommendations     controllers.AwardController.recommendAwards
+GET     /awards/recommendations/history/:nomineeId  controllers.AwardController.getRecommendationHistory(nomineeId: String)
+
+# Nomination Draft (Alternative entry via Award flow)
+POST    /awards/nominations/draft   controllers.AwardController.generateNominationDraft
