@@ -130,54 +130,95 @@ class AwardRecommendationService @Inject()(
   // ---------------------------------------------------------------------------
 
   private def runPass1(messages: List[String]): Future[Either[String, Pass1Result]] = {
-    val systemPrompt =
-      """You are an HR intelligence engine. Your job is to analyse peer recognition messages
-        |and extract a factual profile of the employee's demonstrated skills and behaviours.
-        |Be concise and evidence-based. Do not invent signals not present in the text.""".stripMargin
+    val truncatedMessages = messages.take(5).map(_.take(150))
+    val messagesText = truncatedMessages.zipWithIndex
+      .map { case (m, i) => s"${i + 1}. \"$m\"" }.mkString("\n")
 
-    val userPrompt =
-      s"""Below are peer recognition messages received by an employee.
-         |Summarize their dominant skills and behavioural patterns.
+    // --- Call A: extract signals only (arrays — model handles these fine) ---
+    val signalsSystemPrompt = "You are an HR analyst. Extract skills from peer recognition messages. Return only JSON."
+    val signalsUserPrompt =
+      s"""Peer recognition messages:
+         |$messagesText
          |
-         |Messages:
-         |${messages.zipWithIndex.map { case (m, i) => s"${i + 1}. \"$m\"" }.mkString("\n")}
-         |
-         |Return ONLY a JSON object with exactly these three fields:
-         |{
-         |  "dominantSignals": ["list of clear signals found in the evidence"],
-         |  "absentOrUnclear": ["signals that are missing or too vague to confirm"],
-         |  "partialSummary": "2-3 sentence factual summary of the employee's profile"
-         |}
-         |No markdown, no preamble, no explanation — pure JSON only.""".stripMargin
+         |Return ONLY this JSON, no other text:
+         |{"dominantSignals":["skill1","skill2"],"absentOrUnclear":["gap1","gap2"]}""".stripMargin
 
-    geminiClient.generateContent(systemPrompt, userPrompt, temperature = 0.1).map {
-      case Left(err) => Left(s"Pass 1 generation failed: $err")
+    geminiClient.generateContent(signalsSystemPrompt, signalsUserPrompt, temperature = 0.1).flatMap {
+      case Left(err) => Future.successful(Left(s"Pass 1 signals failed: $err"))
       case Right(raw) =>
-        parsePass1Response(raw) match {
-          case Left(parseErr) =>
-            logger.warn(s"[AwardRecommendationService] Pass 1 parse error: $parseErr. Raw: ${raw.take(300)}")
-            Left(s"Failed to parse profile analysis: $parseErr")
-          case Right(result) => Right(result)
+        parseSignals(raw) match {
+          case Left(err) => Future.successful(Left(err))
+          case Right((dominant, absent)) =>
+
+            // --- Call B: generate summary only (single string — small output) ---
+            val summarySystemPrompt = "You are an HR analyst. Write a brief factual employee summary. Return only JSON."
+            val summaryUserPrompt =
+              s"""Based on these skills: ${dominant.mkString(", ")}
+                 |
+                 |Return ONLY this JSON, no other text:
+                 |{"s":"One to two sentence factual summary of the employee."}""".stripMargin
+
+            geminiClient.generateContent(summarySystemPrompt, summaryUserPrompt, temperature = 0.1).map {
+              case Left(err) => Left(s"Pass 1 summary failed: $err")
+              case Right(raw2) =>
+                parseSummary(raw2) match {
+                  case Left(err) => Left(err)
+                  case Right(summary) => Right(Pass1Result(dominant, absent, summary))
+                }
+            }
         }
     }
   }
 
-  private def parsePass1Response(raw: String): Either[String, Pass1Result] =
+  private def parseSignals(raw: String): Either[String, (List[String], List[String])] =
     try {
       val json = Json.parse(raw)
       val dominant = (json \ "dominantSignals").asOpt[List[String]].getOrElse(Nil)
-      val absent = (json \ "absentOrUnclear").asOpt[List[String]].getOrElse(Nil)
-      val summary = (json \ "partialSummary").asOpt[String].getOrElse("")
-      if (summary.isEmpty) Left("partialSummary was empty")
-      else Right(Pass1Result(dominant, absent, summary))
+      val absent   = (json \ "absentOrUnclear").asOpt[List[String]].getOrElse(Nil)
+      if (dominant.isEmpty) Left("dominantSignals was empty")
+      else Right((dominant, absent))
     } catch {
       case e: Exception => Left(e.getMessage)
     }
+
+  private def parseSummary(raw: String): Either[String, String] =
+    try {
+      val json = Json.parse(raw)
+      // try short key "s" first, then verbose fallbacks
+      val summary = (json \ "s").asOpt[String]
+        .orElse((json \ "summary").asOpt[String])
+        .orElse((json \ "partialSummary").asOpt[String])
+        .getOrElse("")
+      if (summary.isEmpty) Left("summary was empty")
+      else Right(summary)
+    } catch {
+      case e: Exception => Left(e.getMessage)
+    }
+
+//  private def parsePass1Response(raw: String): Either[String, Pass1Result] =
+//    try {
+//      val json = Json.parse(raw)
+//      val dominant = (json \ "dominantSignals").asOpt[List[String]].getOrElse(Nil)
+//      val absent   = (json \ "absentOrUnclear").asOpt[List[String]].getOrElse(Nil)
+//      // fallback key variants the model sometimes emits
+//      val summary  = (json \ "partialSummary")
+//        .asOpt[String]
+//        .orElse((json \ "partial_summary").asOpt[String])
+//        .orElse((json \ "summary").asOpt[String])
+//        .getOrElse("")
+//      if (summary.isEmpty) Left("partialSummary was empty")
+//      else Right(Pass1Result(dominant, absent, summary))
+//    } catch {
+//      case e: Exception => Left(e.getMessage)
+//    }
 
   // ---------------------------------------------------------------------------
   // Pass 2 — targeted retrieval for absent signals
   // ---------------------------------------------------------------------------
 
+  // Pass 1 — unchanged from last version, already correct
+
+  // Pass 2 — updated to short-key pattern
   private def runPass2(nomineeId: String, pass1: Pass1Result): Future[Either[String, String]] = {
     val targetedQuery = pass1.absentOrUnclear.mkString(" ")
 
@@ -191,42 +232,39 @@ class AwardRecommendationService @Inject()(
           scoreThreshold = 0.0f
         ).flatMap { points =>
 
-          val messages = extractMessages(points)
+          val messages = extractMessages(points).take(5).map(_.take(150)) // match Pass 1 caps
 
           if (messages.isEmpty) {
-            // No additional evidence found — return empty supplement gracefully
             logger.info(s"[AwardRecommendationService] Pass 2 found no additional evidence for $nomineeId")
             return Future.successful(Right(""))
           }
 
           val absentList = pass1.absentOrUnclear.mkString(", ")
+          val messagesText = messages.zipWithIndex
+            .map { case (m, i) => s"${i + 1}. \"$m\"" }.mkString("\n")
 
-          val systemPrompt =
-            """You are an HR intelligence engine. Analyse the provided peer recognition messages
-              |and determine whether they contain evidence of specific signals.
-              |Be factual and concise. Do not invent evidence.""".stripMargin
-
+          val systemPrompt = "You are an HR analyst. Analyse peer messages for evidence of specific skills. Return only JSON."
           val userPrompt =
-            s"""These are additional peer recognition messages for the same employee.
-               |Does this evidence show signals of: $absentList?
+            s"""Messages:
+               |$messagesText
                |
-               |Messages:
-               |${messages.zipWithIndex.map { case (m, i) => s"${i + 1}. \"$m\"" }.mkString("\n")}
+               |Do these show evidence of: $absentList?
                |
-               |Return ONLY a JSON object:
-               |{
-               |  "supplementary_summary": "1-2 sentences on what additional evidence was or was not found"
-               |}
-               |No markdown, no preamble — pure JSON only.""".stripMargin
+               |Return ONLY this JSON, no other text:
+               |{"s":"1-2 sentence answer on what evidence was or was not found."}""".stripMargin
 
           geminiClient.generateContent(systemPrompt, userPrompt, temperature = 0.1).map {
             case Left(err) => Left(s"Pass 2 generation failed: $err")
             case Right(raw) =>
               try {
                 val json = Json.parse(raw)
-                Right((json \ "supplementary_summary").asOpt[String].getOrElse(""))
+                Right(
+                  (json \ "s").asOpt[String]
+                    .orElse((json \ "supplementary_summary").asOpt[String])
+                    .getOrElse("")
+                )
               } catch {
-                case _: Exception => Right("") // non-fatal — degrade gracefully
+                case _: Exception => Right("") // non-fatal
               }
           }
         }

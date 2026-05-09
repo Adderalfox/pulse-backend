@@ -120,8 +120,8 @@ class GeminiClient @Inject()(ws: WSClient, config: AppConfig)(implicit ec: Execu
       "stream" -> false,
       "options" -> Json.obj(
         "temperature" -> temperature,
-        "num_predict" -> 8192, // Increase token limit to prevent truncated JSON
-        "num_ctx" -> 8192
+        "num_predict" -> 300, // Increase token limit to prevent truncated JSON
+        "num_ctx" -> 1024
       ),
       "format" -> "json",
       "think" -> false
