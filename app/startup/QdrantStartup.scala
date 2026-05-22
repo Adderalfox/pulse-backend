@@ -23,7 +23,13 @@ class QdrantStartup @Inject()(qdrantClient: QdrantClientWrapper, lifecycle: Appl
     logger.error(s"[QdrantStartup] Failed to ensure pulse_award_definitions: ${e.getMessage}")
   }
 
-  lifecycle.addStopHook{ () =>
+  qdrantClient.ensureEmployeeProfilesCollectionExists().map { _ =>
+    logger.info("[QdrantStartup] employee profiles collection ready.")
+  }.recover { case e =>
+    logger.error(s"[QdrantStartup] Failed to ensure employee profiles collection: ${e.getMessage}")
+  }
+
+  lifecycle.addStopHook { () =>
     Future.successful(qdrantClient.close())
   }
 }

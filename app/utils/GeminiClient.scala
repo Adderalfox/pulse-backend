@@ -159,8 +159,17 @@ class GeminiClient @Inject()(ws: WSClient, config: AppConfig)(implicit ec: Execu
         val finalRawText = responseText.getOrElse(thinkingText.getOrElse(""))
         val cleanedText = cleanJsonResponse(finalRawText)
 
+        val promptTokens     = (json \ "prompt_eval_count").asOpt[Int].getOrElse(0)
+        val completionTokens = (json \ "eval_count").asOpt[Int].getOrElse(0)
+        val evalDurationMs   = (json \ "eval_duration").asOpt[Long].map(_ / 1_000_000L).getOrElse(0L)
+        val tokensPerSec     = if (evalDurationMs > 0) (completionTokens * 1000L) / evalDurationMs else 0L
+
         // ADD THIS - log the full raw response before cleaning
-        logger.info(s"Ollama raw response field (FULL): $finalRawText")
+        logger.info(
+          s"[Ollama tokens] prompt=${promptTokens}  completion=${completionTokens}  " +
+            s"total=${promptTokens + completionTokens}  " +
+            s"gen=${evalDurationMs}ms  speed=${tokensPerSec}t/s"
+        )
         logger.info(s"Ollama done_reason: ${(json \ "done_reason").asOpt[String]}")
 
         if (cleanedText.isEmpty) {

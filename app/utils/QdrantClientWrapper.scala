@@ -9,7 +9,6 @@ import io.qdrant.client.grpc.Points._
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.jdk.CollectionConverters._
-import scala.util.{Failure, Success}
 
 @Singleton
 class QdrantClientWrapper @Inject()(config: AppConfig)(implicit ec: ExecutionContext) {
@@ -23,7 +22,7 @@ class QdrantClientWrapper @Inject()(config: AppConfig)(implicit ec: ExecutionCon
     Futures.addCallback(
       lf,
       new FutureCallback[A] {
-        def onSuccess(result: A): Unit = promise.success(result)
+        def onSuccess(result: A): Unit    = promise.success(result)
         def onFailure(t: Throwable): Unit = promise.failure(t)
       },
       MoreExecutors.directExecutor()
@@ -53,6 +52,9 @@ class QdrantClientWrapper @Inject()(config: AppConfig)(implicit ec: ExecutionCon
   def ensureAwardDefinitionsCollectionExists(): Future[Unit] =
     ensureCollection(config.qdrant.awardDefinitionsCollectionName, config.qdrant.vectorDimension)
 
+  def ensureEmployeeProfilesCollectionExists(): Future[Unit] =
+    ensureCollection(config.qdrant.employeeProfilesCollectionName, config.qdrant.vectorDimension)
+
   def upsertPoint(
                    pointId: String,
                    vector:  Seq[Float],
@@ -65,25 +67,32 @@ class QdrantClientWrapper @Inject()(config: AppConfig)(implicit ec: ExecutionCon
                              payload: Map[String, String]
                            ): Future[Unit] = upsertToCollection(config.qdrant.awardDefinitionsCollectionName, pointId, vector, payload)
 
-  private def upsertToCollection(
-                                  collectionName: String,
-                                  pointId:        String,
-                                  vector:         Seq[Float],
-                                  payload:        Map[String, String]
-                                ): Future[Unit] = {
-    val payloadMap = payload.map { case (k, v) =>
-      k -> io.qdrant.client.ValueFactory.value(v)
-    }.asJava
+  def upsertEmployeeProfile(
+                             employeeId: String,
+                             vector:     Seq[Float],
+                             payload:    Map[String, String]
+                           ): Future[Unit] = upsertToCollection(config.qdrant.employeeProfilesCollectionName, employeeId, vector, payload)
 
-    val point = PointStruct.newBuilder()
-      .setId(io.qdrant.client.PointIdFactory.id(java.util.UUID.fromString(pointId)))
-      .setVectors(io.qdrant.client.VectorsFactory.vectors(vector.map(Float.box).asJava))
-      .putAllPayload(payloadMap)
-      .build()
+  def getEmployeeProfile(employeeId: String): Future[Option[Seq[Float]]] = {
+    val pointId = io.qdrant.client.PointIdFactory.id(java.util.UUID.fromString(employeeId))
 
     toScalaFuture(
-      client.upsertAsync(collectionName, List(point).asJava)
-    ).map(_ => ())
+      client.retrieveAsync(
+        config.qdrant.employeeProfilesCollectionName,
+        java.util.List.of(pointId),
+        false,
+        true,
+        null
+      )
+    ).map { points =>
+      points.asScala.headOption.flatMap { p =>
+        val vecs = p.getVectors
+        if (vecs.hasVector && vecs.getVector.getDataCount > 0)
+          Some(vecs.getVector.getDataList.asScala.toSeq.map(f => f: Float))
+        else
+          None
+      }
+    }.recover { case _ => None }
   }
 
   def search(
@@ -154,64 +163,51 @@ class QdrantClientWrapper @Inject()(config: AppConfig)(implicit ec: ExecutionCon
                               departmentId:  String,
                               limit:         Int
                             ): Future[List[ScoredPoint]] = {
-
-    // Must: company_id matches
-    val companyCondition = io.qdrant.client.grpc.Points.Condition.newBuilder()
-      .setField(
-        io.qdrant.client.grpc.Points.FieldCondition.newBuilder()
-          .setKey("company_id")
-          .setMatch(
-            io.qdrant.client.grpc.Points.Match.newBuilder()
-              .setKeyword(companyId)
-              .build()
-          )
-          .build()
-      )
-      .build()
-
-    val deptCondition = io.qdrant.client.grpc.Points.Condition.newBuilder()
-      .setField(
-        io.qdrant.client.grpc.Points.FieldCondition.newBuilder()
-          .setKey("department_id")
-          .setMatch(
-            io.qdrant.client.grpc.Points.Match.newBuilder()
-              .setKeyword(departmentId)
-              .build()
-          )
-          .build()
-      )
-      .build()
-
-    val companyWideCondition = io.qdrant.client.grpc.Points.Condition.newBuilder()
-      .setField(
-        io.qdrant.client.grpc.Points.FieldCondition.newBuilder()
-          .setKey("department_id")
-          .setMatch(
-            io.qdrant.client.grpc.Points.Match.newBuilder()
-              .setKeyword("")
-              .build()
-          )
-          .build()
-      )
-      .build()
-
-    val combinedFilter = io.qdrant.client.grpc.Points.Filter.newBuilder()
-      .addMust(companyCondition)
-      .addShould(deptCondition)
-      .addShould(companyWideCondition)
-      .build()
-
     val request = SearchPoints.newBuilder()
       .setCollectionName(config.qdrant.awardDefinitionsCollectionName)
       .addAllVector(profileVector.map(Float.box).asJava)
       .setLimit(limit)
       .setWithPayload(io.qdrant.client.WithPayloadSelectorFactory.enable(true))
-      .setFilter(combinedFilter)
+      .setWithVectors(io.qdrant.client.WithVectorsSelectorFactory.enable(true))
+      .setFilter(buildAwardFilter(companyId, departmentId))
       .build()
 
     toScalaFuture(client.searchAsync(request)).map(_.asScala.toList)
   }
 
+  private def buildAwardFilter(companyId: String, departmentId: String): io.qdrant.client.grpc.Points.Filter =
+    io.qdrant.client.grpc.Points.Filter.newBuilder()
+      .addMust(
+        io.qdrant.client.grpc.Points.Condition.newBuilder()
+          .setField(
+            io.qdrant.client.grpc.Points.FieldCondition.newBuilder()
+              .setKey("company_id")
+              .setMatch(io.qdrant.client.grpc.Points.Match.newBuilder().setKeyword(companyId).build())
+              .build()
+          )
+          .build()
+      )
+      .addShould(
+        io.qdrant.client.grpc.Points.Condition.newBuilder()
+          .setField(
+            io.qdrant.client.grpc.Points.FieldCondition.newBuilder()
+              .setKey("department_id")
+              .setMatch(io.qdrant.client.grpc.Points.Match.newBuilder().setKeyword(departmentId).build())
+              .build()
+          )
+          .build()
+      )
+      .addShould(
+        io.qdrant.client.grpc.Points.Condition.newBuilder()
+          .setField(
+            io.qdrant.client.grpc.Points.FieldCondition.newBuilder()
+              .setKey("department_id")
+              .setMatch(io.qdrant.client.grpc.Points.Match.newBuilder().setKeyword("").build())
+              .build()
+          )
+          .build()
+      )
+      .build()
 
   private def buildMustMatchFilter(key: String, value: String): io.qdrant.client.grpc.Points.Filter =
     io.qdrant.client.grpc.Points.Filter.newBuilder()
@@ -220,16 +216,31 @@ class QdrantClientWrapper @Inject()(config: AppConfig)(implicit ec: ExecutionCon
           .setField(
             io.qdrant.client.grpc.Points.FieldCondition.newBuilder()
               .setKey(key)
-              .setMatch(
-                io.qdrant.client.grpc.Points.Match.newBuilder()
-                  .setKeyword(value)
-                  .build()
-              )
+              .setMatch(io.qdrant.client.grpc.Points.Match.newBuilder().setKeyword(value).build())
               .build()
           )
           .build()
       )
       .build()
+
+  private def upsertToCollection(
+                                  collectionName: String,
+                                  pointId:        String,
+                                  vector:         Seq[Float],
+                                  payload:        Map[String, String]
+                                ): Future[Unit] = {
+    val payloadMap = payload.map { case (k, v) =>
+      k -> io.qdrant.client.ValueFactory.value(v)
+    }.asJava
+
+    val point = PointStruct.newBuilder()
+      .setId(io.qdrant.client.PointIdFactory.id(java.util.UUID.fromString(pointId)))
+      .setVectors(io.qdrant.client.VectorsFactory.vectors(vector.map(Float.box).asJava))
+      .putAllPayload(payloadMap)
+      .build()
+
+    toScalaFuture(client.upsertAsync(collectionName, List(point).asJava)).map(_ => ())
+  }
 
   def close(): Unit = client.close()
 }

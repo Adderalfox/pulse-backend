@@ -22,6 +22,7 @@ class AppConfig @Inject()(config: Configuration) {
     val port: Int = config.get[Int]("qdrant.port")
     val collectionName: String = config.get[String]("qdrant.collection-name")
     val awardDefinitionsCollectionName: String = config.get[String]("qdrant.award-definitions-collection-name")
+    val employeeProfilesCollectionName : String = config.get[String]("qdrant.employee-profiles-collection-name")
     val vectorDimension: Int = config.get[Int]("qdrant.vector-dimensions")
   }
 }
