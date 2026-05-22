@@ -16,7 +16,7 @@ class AuthService @Inject()(userRepo: UserRepository)(implicit ec: ExecutionCont
       return Future.successful(Left("You are not allowed to create this role"))
     }
 
-    if (requester.companyId != companyId) {
+    if (requester.companyId != companyId && requester.role == Role.ADMIN) {
       return Future.successful(Left("Cannot create user in another company"))
     }
 
@@ -45,6 +45,8 @@ class AuthService @Inject()(userRepo: UserRepository)(implicit ec: ExecutionCont
           companyId = user.companyId,
           departmentId = user.departmentId
         )
+
+        println("payload" -> payload)
 
         Some(JwtUtil.generateToken(payload))
       case _ => None

@@ -20,3 +20,44 @@ POST    /auth/login                 controllers.AuthController.login
 POST    /company/create             controllers.CompanyController.createCompany
 
 POST    /department/create          controllers.DepartmentController.createDepartment
+
+# For creation of super admin
+# POST    /auth/bootstrap             controllers.AuthController.bootstrapSuperAdmin
+
+POST    /appreciations/create       controllers.AppreciationController.createAppreciation
+
+GET     /appreciations/feed         controllers.AppreciationController.feed(limit: Int, offset: Int)
+
+GET     /appreciations/suggestions  controllers.AppreciationController.suggestions
+
+GET     /skills/user/:userId        controllers.SkillController.getUserSkills(userId: String)
+
+GET     /skills/top                 controllers.SkillController.getTopUsersForSkill
+
+GET     /skills/search              controllers.SkillController.searchSkills
+
+GET     /users/list                 controllers.UserController.listUsers
+
+GET     /insights/experts           controllers.InsightController.getTopExperts
+
+POST    /query/experts              controllers.InsightController.queryExperts
+
+POST    /nominations/generate       controllers.NominationController.generateDraft
+
+GET     /nominations/nominee/:nomineeId controllers.NominationController.getDraftsForNominee(nomineeId: String)
+
+GET     /nominations/my-drafts      controllers.NominationController.getMyDrafts
+
+# Award Definitions
+POST    /awards/definitions         controllers.AwardController.createAwardDefinition
+GET     /awards/definitions         controllers.AwardController.listAwardDefinitions
+GET     /awards/definitions/:id     controllers.AwardController.getAwardDefinition(id: String)
+PUT     /awards/definitions/:id     controllers.AwardController.updateAwardDefinition(id: String)
+DELETE  /awards/definitions/:id     controllers.AwardController.deleteAwardDefinition(id: String)
+
+# Award Recommendations
+POST    /awards/recommendations     controllers.AwardController.recommendAwards
+GET     /awards/recommendations/history/:nomineeId  controllers.AwardController.getRecommendationHistory(nomineeId: String)
+
+# Nomination Draft (Alternative entry via Award flow)
+POST    /awards/nominations/draft   controllers.AwardController.generateNominationDraft

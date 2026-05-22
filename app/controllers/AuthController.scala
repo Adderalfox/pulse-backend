@@ -6,12 +6,13 @@ import play.api.libs.json._
 import services.AuthService
 import actions.{AuthAction, AuthHelper}
 import models.Role
+import play.api.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AuthController @Inject()(cc: ControllerComponents, authService: AuthService, authAction: AuthAction)(implicit ec: ExecutionContext)
-  extends AbstractController(cc) {
+  extends AbstractController(cc) with Logging {
 
   def createUser = authAction.async(parse.json) { request =>
 
@@ -24,6 +25,7 @@ class AuthController @Inject()(cc: ControllerComponents, authService: AuthServic
       val password = (req.body \ "password").as[String]
       val roleStr = (req.body \ "role").as[String]
       val departmentId = (req.body \ "departmentId").asOpt[String]
+      val companyId = (req.body \ "companyId").asOpt[String]
 
       try {
         val role = Role.fromString(roleStr)
@@ -34,10 +36,11 @@ class AuthController @Inject()(cc: ControllerComponents, authService: AuthServic
           email = email,
           password = password,
           role = role,
-          companyId = req.user.companyId,
+          companyId = companyId, // ToDo:-Fix it for taking from req.companyId
           departmentId = departmentId
         ).map {
           case Right(user) =>
+            logger.info("User is created!")
             Ok(Json.obj("userId" -> user.id))
 
           case Left(error) =>

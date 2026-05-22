@@ -2,17 +2,17 @@ package repositories
 
 import javax.inject._
 import play.api.db.slick.DatabaseConfigProvider
-import slick.jdbc.JdbcProfile
 import models.Company
 
 import java.util.UUID
-
+import slick.jdbc.PostgresProfile
 import java.time.LocalDateTime
+
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class CompanyRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(implicit ec: ExecutionContext) {
-  private val dbConfig = dbConfigProvider.get[JdbcProfile]
+  private val dbConfig = dbConfigProvider.get[PostgresProfile]
 
   import dbConfig.profile.api._
 
@@ -21,7 +21,7 @@ class CompanyRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(impl
     def id = column[String]("id", O.PrimaryKey)
     def name = column[String]("name")
     def domain = column[String]("domain")
-    def createdAt = column[Option[java.time.LocalDateTime]]("created_at")
+    def createdAt = column[java.time.LocalDateTime]("created_at")
 
     def * = (id, name, domain, createdAt) <> ((Company.apply _).tupled, Company.unapply)
   }
@@ -29,7 +29,7 @@ class CompanyRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(impl
   private val companies = TableQuery[CompanyTable]
 
   def create(name: String, domain: String): Future[Company] = {
-    val now = Some(LocalDateTime.now())
+    val now = LocalDateTime.now()
     val newId = UUID.randomUUID().toString
 
     val newCompany = Company(newId, name, domain, now)
