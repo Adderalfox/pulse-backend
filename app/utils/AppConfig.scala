@@ -24,5 +24,6 @@ class AppConfig @Inject()(config: Configuration) {
     val awardDefinitionsCollectionName: String = config.get[String]("qdrant.award-definitions-collection-name")
     val employeeProfilesCollectionName : String = config.get[String]("qdrant.employee-profiles-collection-name")
     val vectorDimension: Int = config.get[Int]("qdrant.vector-dimensions")
+    val emaAlpha: Float = config.get[Double]("qdrant.ema-alpha").toFloat
   }
 }

@@ -123,9 +123,9 @@ class EmbeddingService @Inject()(
       newVec
 
     case Some(old) =>
-      val oldCount = newCount - 1
+      val alpha = config.qdrant.emaAlpha
       old.zip(newVec).map { case (o, n) =>
-        ((o * oldCount) + n) / newCount
+        (alpha * n) + ((1 - alpha) * o)
       }
   }
 
